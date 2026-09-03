@@ -1,32 +1,36 @@
-const nodemailer = require("nodemailer");
-
 require("dotenv").config({ path: require("path").join(__dirname, "..", ".env") });
 
-const emailUser = String(process.env.EMAIL_USER || "").trim();
-const emailPass = String(process.env.EMAIL_PASS || "").replace(/\s+/g, "");
-
-const transporter = nodemailer.createTransport({
-    service: "gmail",
-    auth: {
-        user: emailUser,
-        pass: emailPass
-    }
-});
+const resendApiKey = String(process.env.RESEND_API_KEY || "").trim();
+const sender = String(process.env.EMAIL_FROM || "onboarding@resend.dev").trim();
 
 const sendOTP = async (email, otp) => {
+    if (!resendApiKey) {
+        throw new Error("RESEND_API_KEY is not configured.");
+    }
 
-    await transporter.sendMail({
-        from: process.env.EMAIL_USER,
-        to: email,
-        subject: "SIGLA TALA Email Verification",
-        html: `
+    const response = await fetch("https://api.resend.com/emails", {
+        method: "POST",
+        headers: {
+            Authorization: `Bearer ${resendApiKey}`,
+            "Content-Type": "application/json"
+        },
+        body: JSON.stringify({
+            from: sender,
+            to: [email],
+            subject: "SIGLA TALA Email Verification",
+            html: `
             <h2>Email Verification</h2>
             <p>Your verification code is:</p>
             <h1>${otp}</h1>
             <p>This code expires in 10 minutes.</p>
         `
+        }),
+        signal: AbortSignal.timeout(15000)
     });
 
+    if (!response.ok) {
+        throw new Error(`Resend API ${response.status}: ${await response.text()}`);
+    }
 };
 
 module.exports = sendOTP;
