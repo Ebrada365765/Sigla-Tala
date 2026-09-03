@@ -2,10 +2,7 @@
 // SIGLA TALA - AUTHENTICATION JS
 // ===============================
 
-const API_BASE_URL = window.SIGLA_TALA_API_URL ||
-    (window.location.hostname === "localhost" || window.location.hostname === "127.0.0.1" ?
-        "http://localhost:3000" :
-        "https://your-render-backend-url");
+const API_BASE_URL = window.SIGLA_TALA_API_URL || "http://localhost:3000";
 
 const API_URL = `${API_BASE_URL}/api/auth`;
 const ADMIN_DASHBOARD_URL = "admin-dashboard.html";

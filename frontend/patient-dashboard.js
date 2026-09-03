@@ -2,12 +2,55 @@
 // SIGLA TALA - PATIENT DASHBOARD JS
 // ======================================
 
-const API_BASE_URL = window.SIGLA_TALA_API_URL ||
-    (window.location.hostname === "localhost" || window.location.hostname === "127.0.0.1" ?
-        "http://localhost:3000" :
-        "https://your-render-backend-url");
+const API_BASE_URL = window.SIGLA_TALA_API_URL || "http://localhost:3000";
 const LOGIN_URL = "login.html";
+const INACTIVITY_TIMEOUT_MS = 10 * 60 * 1000;
 
+function clearAuthSession() {
+    localStorage.removeItem("token");
+    localStorage.removeItem("user");
+    sessionStorage.removeItem("pendingVerificationEmail");
+    sessionStorage.removeItem("siglaTalaAuthView");
+}
+
+function forceLogout(message = "You were logged out due to inactivity.") {
+    clearAuthSession();
+
+    if (typeof showToast === "function") {
+        showToast(message, "warning");
+    }
+
+    setTimeout(function () {
+        window.history.replaceState(null, "", LOGIN_URL);
+        window.location.replace(LOGIN_URL);
+    }, 500);
+}
+
+function resetInactivityTimer() {
+    if (!localStorage.getItem("token")) return;
+    clearTimeout(window.siglaInactivityTimer);
+    window.siglaInactivityTimer = setTimeout(function () {
+        forceLogout("You were logged out due to inactivity.");
+    }, INACTIVITY_TIMEOUT_MS);
+}
+
+["click", "keydown", "mousemove", "touchstart", "scroll"].forEach(function (eventName) {
+    document.addEventListener(eventName, resetInactivityTimer, { passive: true });
+});
+
+window.addEventListener("beforeunload", function () {
+    if (localStorage.getItem("token")) {
+        clearAuthSession();
+    }
+});
+
+window.addEventListener("pagehide", function () {
+    if (localStorage.getItem("token")) {
+        clearAuthSession();
+    }
+});
+
+window.addEventListener("load", resetInactivityTimer);
 
 // ======================================
 // GET ELEMENTS
@@ -353,42 +396,16 @@ if (logOutBtn) {
         "click",
         function () {
 
-            localStorage.removeItem(
-                "token"
-            );
-
-            localStorage.removeItem(
-                "user"
-            );
-
-
-            sessionStorage.removeItem(
-                "pendingVerificationEmail"
-            );
-
-            sessionStorage.removeItem(
-                "siglaTalaAuthView"
-            );
-
+            clearAuthSession();
 
             showToast(
                 "You have been logged out.",
                 "success"
             );
 
-
             setTimeout(function () {
-
-                window.history.replaceState(
-                    null,
-                    "",
-                    LOGIN_URL
-                );
-
-                window.location.replace(
-                    LOGIN_URL
-                );
-
+                window.history.replaceState(null, "", LOGIN_URL);
+                window.location.replace(LOGIN_URL);
             }, 500);
 
         }
