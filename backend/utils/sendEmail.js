@@ -6,9 +6,7 @@ const emailUser = String(process.env.EMAIL_USER || "").trim();
 const emailPass = String(process.env.EMAIL_PASS || "").replace(/\s+/g, "");
 
 const transporter = nodemailer.createTransport({
-    host: "smtp.gmail.com",
-    port: 587,
-    secure: false,
+    service: "gmail",
     connectionTimeout: 15000,
     greetingTimeout: 15000,
     socketTimeout: 15000,
